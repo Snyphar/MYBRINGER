@@ -1,0 +1,123 @@
+
+@media (max-width: 600px) {
+    .form-check-label {
+        font-size: 10px; /* Smaller font size for mobile */
+    }
+    .form-row {
+        padding-top: 10px;
+        padding-bottom: 5px;
+        
+        margin:5px;
+    }
+    .form-col {
+        padding-top: 15px;
+        padding-bottom: 5px;
+        display: flex;
+        justify-content: center;
+        
+        
+        
+    }
+    .form-card{
+        padding: 1px;
+    }
+    .parcel-card-body {
+        padding: 5px;
+        margin: 5 auto;
+        width: 100%;
+         /* Center text inside the element */
+    }
+    .form-item-card{
+        min-width: 150px;
+    }
+    .parent-div{
+        padding: 0;
+    }
+    .typing-effect {
+        font-size: 0.9em;
+        font-weight: 700;
+        text-align: center;
+        overflow: hidden;
+        border-right: .15em solid orange;
+        white-space: nowrap;
+        margin: 0 auto;
+        letter-spacing: .15em;
+        animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+    }
+    .btn-borderless{
+        padding-top: 10px;
+    }
+    
+    
+    
+    
+    
+}
+@media (max-width: 996px) {
+    .d-flex.parcel-type {
+        width: 100%;
+        flex-direction: column;
+        align-items: center;
+    }
+    .card.parcel-type-card {
+        width: 90%;
+        max-width: none; /* Override the inline max-width style */
+        margin-bottom: 20px; /* Add space between the cards */
+    }
+    .profile-name{
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .profile-fullname{
+        font-size: 20px;
+        font-weight: 700;
+    }
+    .btn-group-toggle{
+        padding: 0;
+        margin: 0;
+        display: flex; /* Flex display for buttons alignment */
+        justify-content: center; /* Center content horizontally */
+    }
+    .main-option-section{
+        font-size: 10px;
+        font-weight: 400;
+    }
+    .main-options{
+        font-size: 18px;
+        margin-left: 10px;
+    }
+    .section-btn{
+        font-size: 14px;
+        font-weight: 700;
+    }
+    .about-section-col{
+        margin: 0;
+        padding-right: 0;
+    }
+    .about-body{
+        padding: 0;
+    }
+    .media-links {
+        display: block;
+        width: 85%;
+        text-decoration: none;
+        word-break: break-all;
+    }
+    .profile-container{
+        padding: 0;
+        margin: 0;
+    }
+    
+}
+@media (max-width: 767px){
+    .profile-country-bg{
+        display: none;
+    }
+    
+}
+@media (min-width: 767px){
+    .profile-country-sm{
+        display: none;
+    }
+    
+}

@@ -39,9 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
 
     if ($checkNotificationResult->num_rows > 0) {
-        
+        $total_comments = $checkNotificationResult->num_rows;
         // Post_id exists, update the message
-        $updateNotificationSql = "UPDATE post_notification SET message = '".$_SESSION['first_name']." and ".($total_likes-1)." others commented your post', seen = 0 WHERE post_id = $postId";
+        $updateNotificationSql = "UPDATE post_notification SET message = '".$_SESSION['first_name']." and ".($total_comments-1)." others commented your post', seen = 0 WHERE post_id = $postId";
         
         $conn->query($updateNotificationSql);
     } else {

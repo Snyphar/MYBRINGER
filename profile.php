@@ -6,7 +6,7 @@ include "db_connect.php";
 if (isset($_GET['id'])) {
     // Get the value of 'name' parameter
     $id = $_GET['id'];
-    
+    $user_id = $id;
     $sql = "SELECT * FROM users WHERE id = ?";
     $stmt = $conn->prepare($sql);
 
@@ -27,11 +27,17 @@ if (isset($_GET['id'])) {
     }
 }
 else if(isset($_SESSION['id'])){
+    $user_id = $_SESSION['id'];
     $user_data = $_SESSION;
 } 
 else{
     header("Location: login.php");
 }
+
+if (isset($_GET['section'])){
+    $section = $_GET['section'];
+}
+
 ?>
 
 
@@ -52,6 +58,23 @@ else{
     
 
     <style>
+        .profile-country-sm{
+            
+            position: absolute;
+            top:0;
+            right:10px;
+        }
+        .popup {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 40px; /* Adjust as needed */
+            right: 0;
+            background-color: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
         .fi {
             font-size: 25px; /* Adjust the font-size as needed */
         }
@@ -294,22 +317,128 @@ else{
             margin-bottom: 20px; /* Adds some space between the cards */
         }
 
+        .aligned-td {
+            padding: 0;
+            margin: 0;
+            vertical-align: top;
+        }
+
+        .post-card-footer {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px;
+            
+        }
+        .button-container, .number-container {
+            display: flex;
+            padding:0;
+            align-items: center;
+        }
+        .button-container .btn {
+            margin-right: 10px;
+            
+            display: flex;
+            align-items: center;
+        }
+        .number-container p {
+            margin: 0;
+            font-weight: bold;
+            color: gray;
+        }
+        .comment-post {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+
+        .comment-item {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .comment-item img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .comment-item div {
+            flex: 1;
+        }
+
+        .comment-item-username {
+            color: #333;
+        }
+
+        .comment-item-text {
+            margin-top: 5px;
+            color: #666;
+            max-width: 90%; /* Ensure it takes the full width of its parent by default */
+            word-wrap: break-word; /* Break long words to wrap onto the next line */
+            
+            flex: 1; /* Allow it to take available space */
+        }
+
+        .comment-box {
+            margin-top: 10px;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid #ccc; /* Add gray border */
+        }
+
+        .comment-box textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: none;
+            outline: none;
+            resize: none;
+            border-radius: 20px;
+        }
+        .comment-button-container {
+            display: flex;
+            justify-content: flex-end; /* Align button to the left */
+        }
+        .comment-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin-top: 10px; /* Adjust the margin */
+            
+        }
+
+        .comment-button:hover {
+            background-color: #0056b3;
+        }
+
+        .liked-icon {
+            color: #007bff;
+        }
+        
+        
+
         
         
 
         
     </style>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body >
 
 <?php include 'navbar.php'; ?>
 
-<div class="container-fluid">
+<div class="container-fluid profile-container">
     <div class="card">
 
 
     
-        <div class="card-body">
+        <div class="card-body ">
             <div class="row">
                 <div class="col-md-8">
                     
@@ -396,20 +525,21 @@ else{
                         <?php endif;?>
 
                     </div>
-                    
-                    <?php
-                    if(isset($user_row)):
-                    
-                    ?>
-                    <h2><b><?php echo ucfirst(strtolower($user_row['first_name']))." ".ucfirst(strtolower($user_row['last_name']))?> </b></h2>
-                    <p style="font-weight: 500;"><?php echo ucfirst(strtolower($user_row['occupation']))?> | <?php echo ucfirst(strtolower($user_row['city']))?> | <?php echo ucfirst(strtolower($user_row['country']))?></p>
+                    <h2 class="profile-fullname"><b><?php echo ucfirst(strtolower($user_data['first_name']))." ".ucfirst(strtolower($user_data['last_name']))?> </b></h2>
+                    <p style="font-weight: 500;"><?php echo ucfirst(strtolower($user_data['occupation']))?> | <?php echo ucfirst(strtolower($user_data['city']))?> | <?php echo ucfirst(strtolower($user_data['country']))?></p>
                     <div style="width:30%" class="pb-2">
                         <div class='bar-container' >
                             <div class='bar' style='width: <?php echo $percentage;?>%'><?php echo $percentage;?>%</div>
                         </div>
                         
                     </div>
-                    
+                    <?php
+                    if(!isset($user_row)):
+                    ?>
+                    <a href="#" id="editInfo">Edit Info</a>
+                    <?php
+                    endif;
+                    ?>
                     <div >
                         <div class="rate">
                         <?php
@@ -429,106 +559,50 @@ else{
                         ?>
                         </div>
                     </div>
-                    
+                    <?php
+                    if(isset($user_row)):
+                    ?>
                     <div class="mb-4">
                         <button class="btn btn-primary" id="addReview" onclick="showReviewModal()">Add a Review</button>
                     </div>
-                    
                     <div class="rounded-buttons">
                         <button class="btn btn-primary btn-sm fill-on-hover ">+connect</button>
                         <button class="btn btn-outline-primary btn-sm fill-on-hover">message</button>
                     </div>
                     <?php
-                    else:
+                    endif
                     ?>
-                    <h2><b><?php echo ucfirst(strtolower($_SESSION['first_name']))." ".ucfirst(strtolower($_SESSION['last_name']))?> </b></h2>
-                    <p style="font-weight: 500;"><?php echo ucfirst(strtolower($_SESSION['occupation']))?> | <?php echo ucfirst(strtolower($_SESSION['city']))?> | <?php echo ucfirst(strtolower($_SESSION['country']))?></p>
-                    <div style="width:30%">
-                        <div class='bar-container'>
-                            <div class='bar' style='width: <?php echo $percentage;?>%'><?php echo $percentage;?>%</div>
-                        </div>
-                        <span><small><?php echo $percentage;?>%</small></span>
-                    </div>
-                    <a href="#" id="editInfo">Edit Info</a>
-                    <div >
-                        <div class="rate">
-                            <?php
-                                // Assume $avg_star_int is the integer part of the average star rating
-                                // and $avg_star is the exact average star rating
-
-                                for ($i = 5; $i >= 1; $i--) {
-                                    echo '<input type="radio" id="star'.$i.'" name="rating-sub" value="'.$i.'"';
-                                    if ($avg_star_int == $i) {
-                                        echo ' checked';
-                                    } else {
-                                        echo ' disabled';
-                                    }
-                                    echo ' />';
-                                    echo '<label for="star'.$i.'" title="'.$i.' stars">'.$i.' stars</label>';
-                                }
-                            ?>
-                        </div>
-                        <script></script>
+                    <p class="profile-country-sm" ><span  class="fi <?php echo $country_icon;?>" ></p>
+                    <div class="popup" id="country-popup">
+                        <?php echo $user_data['country']?>
                     </div>
                     
-                    <?php endif;?>
+                    
                     
                     
                     
 
                 </div>
-                
-                <?php
-                if(isset($user_row)):
-                
-                ?>
-                
                 <div class="col-md-4">
-                    <p><span class="fi <?php echo $country_icon;?>" ></span><?php echo $user_row['country']?></p>
+                    <p class="profile-country-bg"><span class="fi <?php echo $country_icon;?>" ></span><?php echo $user_data['country']?></p>
                     
                     
                     <br>
                     <br>
                     <br>
-                    <a href="<?php echo $user_row['facebook']?>" target="__blank">
+                    <a href="<?php echo $user_data['facebook']?>" target="__blank">
                         <p><img src="./images/icons/facebook.png" class="mr-2" height=32 width=32 alt="">Facebook</p>
                     </a>
-                    <a href="<?php echo $user_row['instagram']?>" target="__blank">
+                    <a href="<?php echo $user_data['instagram']?>" target="__blank">
                         <p><img src="./images/icons/instagram.png" class="mr-2" height=30 width=30 alt="">Instagram</p>
                     </a>
-                    <a href="<?php echo $user_row['linkedin']?>" target="__blank">
+                    <a href="<?php echo $user_data['linkedin']?>" target="__blank">
                         <p><img src="./images/icons/LinkedIN.png" class="mr-2" height=30 width=30 alt="">LinkedIn</p>
                     </a>
 
                     
                 </div>
-                <?php
-                else:
-                ?>
                 
-                <div class="col-md-4">
-                    <p><span class="fi <?php echo $country_icon;?>"></span><?php echo $_SESSION['country']?></p>
-                    <br>
-                    <br>
-                    <br>
-                    <?php if (!empty($_SESSION['facebook'])): ?>
-                        <a href="<?php echo $_SESSION['facebook']?>" target="__blank">
-                            <p><img src="./images/icons/facebook.png" class="mr-2" height=32 width=32 alt="">Facebook</p>
-                        </a>
-                    <?php endif; ?>
-                    <?php if (!empty($_SESSION['instagram'])): ?>
-                        <a href="<?php echo $_SESSION['instagram']?>" target="__blank">
-                            <p><img src="./images/icons/instagram.png" class="mr-2" height=30 width=30 alt="">Instagram</p>
-                        </a>
-                    <?php endif; ?>
-                    <?php if (!empty($_SESSION['linkedin'])): ?>
-                        <a href="<?php echo $_SESSION['linkedin']?>" target="__blank">
-                            <p><img src="./images/icons/LinkedIN.png" class="mr-2" height=30 width=30 alt="">LinkedIn</p>
-                        </a>
-                    <?php endif; ?>
-                </div>
-
-                <?php endif;?>
                 
             </div>
         </div>
@@ -538,60 +612,60 @@ else{
 
         <div class="main-option-section row p-3">
             <p><span class="main-options about">About</span></p>
-            <p><span class="main-options post">Post</span><small class="main-options-val"> 20</small></p>
-            <p><span class="main-options review">Review</span><small class="main-options-val"> 20</small></p>
-            <p><span class="main-options">Following</span><small class="main-options-val"> 20</small></p>
-            <p><span class="main-options">Followers</span><small class="main-options-val"> 20</small></p>
+            <p><span class="main-options post">Post</span></p>
+            <p><span class="main-options review">Review</span></p>
+            <p><span class="main-options">Following</span></p>
+            <p><span class="main-options">Followers</span></p>
         </div>
     </div>
     <!-- About Section -->
     
     <div class="about-section card mt-4" style="">
-        <div class="card-body">
+        <div class="card-body about-body">
             
             <div class="row">
-                <div class="col-4 position-relative">
+                <div class="col-4 position-relative about-section-col">
                     <h5 class="section-title mb-4"><b>About</b></h5>
                     <button class="section-btn mb-3" onclick="toggleSection('personal-info')">Personal Info</button>
                     <button class="section-btn mb-3" onclick="toggleSection('contact-info')">Contact Info</button>
-                    <button class="section-btn mb-3" onclick="toggleSection('social-info')">Social Media Links</button>
+                    <button class="section-btn mb-3" onclick="toggleSection('social-info')">Social Links</button>
                     
                     
                 </div>
-                <div class="col-8">
+                <div class="col-8 about-section-col">
                 <div class="section-content personal-info-section active ml-3">
                     <h5 class="underlined">Personal info</h5>
                     <table>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Occupation: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><?php echo $user_data['occupation']?></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><?php echo $user_data['occupation']?></p>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Lives In: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><?php echo $user_data['city']?>, <?php echo $user_data['country']?></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><?php echo $user_data['city']?>, <?php echo $user_data['country']?></p>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Address: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><?php echo $user_data['address']?></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><?php echo $user_data['address']?></p>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Zip Code: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><?php echo $user_data['zip']?></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><?php echo $user_data['zip']?></p>
                             </td>
                         </tr>
                     </table>
@@ -600,19 +674,19 @@ else{
                     <h5 class="underlined">Contact info</h5>
                     <table>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Email: </b></p>
-                            </td>
-                            <td>
-                                <p class="ml-2"><a href="mailto:<?php echo $user_data['email']?>"><?php echo $user_data['email']?></a></p>
+                            </td >
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><a class="media-links" href="mailto:<?php echo $user_data['email']?>"><?php echo $user_data['email']?></a></p>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Contact No: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><a href="tel:<?php echo $user_data['contact_no']?>"><?php echo $user_data['contact_no']?></a></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><a class="media-links" href="tel:<?php echo $user_data['contact_no']?>"><?php echo $user_data['contact_no']?></a></p>
                             </td>
                         </tr>
                     </table>
@@ -621,27 +695,27 @@ else{
                     <h5 class="underlined">Social Media Info</h5>
                     <table>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Instagram: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><a href="<?php echo $user_data['instagram']?>"><?php echo $user_data['instagram']?></a></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><a class="media-links" href="<?php echo $user_data['instagram']?>"><?php echo $user_data['instagram']?></a></p>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>Facebook: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><a href="<?php echo $user_data['facebook']?>"><?php echo $user_data['facebook']?></a></p>
+                            <td class="aligned-td">
+                                <p class="ml-2"><a class="media-links" href="<?php echo $user_data['facebook']?>"><?php echo $user_data['facebook']?></a></p>
                             </td>
                         </tr>
                         <tr>
-                            <td>
+                            <td class="aligned-td">
                                 <p><b>LinkedIn: </b></p>
                             </td>
-                            <td>
-                                <p class="ml-2"><a href="<?php echo $user_data['linkedin']?>"><?php echo $user_data['linkedin']?></a></p>
+                            <td class="aligned-td">
+                                <p class="ml-md-2 ml-sm-1"><a class="media-links" class="mr-2" href="<?php echo $user_data['linkedin']?>"><?php echo $user_data['linkedin']?></a></p>
                             </td>
                         </tr>
                     </table>
@@ -655,15 +729,15 @@ else{
     </div>
     
     <div class="post-section card mt-4" style="display: none;">
-        <div class="card-body">
+        <div class="card-body about-body">
             <h3>Post</h3>
             <?php
-            $sql = "SELECT post.*, users.*, TIMESTAMPDIFF(SECOND, post.created_at, NOW()) AS time_elapsed_seconds FROM post JOIN users ON post.uid = users.id ORDER BY post.created_at DESC;";
+            $sql = "SELECT post.id AS post_id, users.id AS user_id, post.*, users.*, TIMESTAMPDIFF(SECOND, post.created_at, NOW()) AS time_elapsed_seconds FROM post JOIN users ON post.uid = users.id ORDER BY post.created_at DESC;";
             $result = $conn->query($sql);
             while($row=$result->fetch_assoc()):
                 
             ?>
-            <div class="card post-card text-center   post-type-<?php echo $row['post_type']?>" style="max-width: 700px;">
+            <div class="card post-card   post-type-<?php echo $row['post_type']?>" style="max-width: 700px;">
                 <div class="card-header d-flex justify-content-between transparent-header">
                     <div>
                         <div class="d-flex align-items-center">
@@ -681,10 +755,12 @@ else{
                             </a>
                             <?php
                                 // Assuming $row['created_at'] contains a datetime string like "Y-m-d H:i:s"
-                                
+                                $created_at = strtotime($row['created_at']);
+                                $current_time = time();
 
                                 // Calculate the difference in seconds
                                 $time_elapsed = $row['time_elapsed_seconds'];
+                                
 
                                 // Define time intervals in seconds
                                 $minute = 60;
@@ -693,7 +769,7 @@ else{
                                 $week = $day * 7;
                                 $month = $day * 30;
                                 $year = $day * 365;
-
+                                
                                 // Calculate elapsed time in human-readable format
                                 if ($time_elapsed < $minute) {
                                     $elapsed_result = ($time_elapsed <= 1) ? "just now" : $time_elapsed . " seconds ago";
@@ -713,8 +789,8 @@ else{
 
                                 
                             ?>
-                            <div>
-                                <a style="text-decoration: none;color: inherit;font-size:18px;" href="<?php echo "./profile.php?id=".$row['id']?>"><?php echo $row['first_name']." ".$row['last_name']?></a>
+                            <div class="pl-2">
+                                <a style="text-decoration: none;color: inherit;font-size:18px;" href="<?php echo "./profile.php?id=".$row['id']?>"><p class="profile-name mb-0"><?php echo $row['first_name']." ".$row['last_name']?></p></a>
                                 <p class="mb-0" style="font-size: 10px;"><?php echo $elapsed_result; ?></p>
                             </div>
                             
@@ -725,88 +801,161 @@ else{
                         <button class="btn btn-transparent btn-borderless p-0"><b>X</b></button>
                     </div>
                 </div>
-                <div class="card-body text-center">
-                    <?php
-                    $post_type = $row['post_type'];
-                    if ($post_type == 0):
-                    ?>
-                    <h5 class='card-title'><b>I want to send</b></h5>
-                    <?php
-                    elseif ($post_type == 1) :
-                    ?>
-                    <h5 class='card-title'><b>I want to receive</b></h5>
-                    <?php
-                    elseif ($post_type == 2):
-                    ?>
-                    <h5 class='card-title'><b>I want to carry</b></h5>
-                    <?php
-                    else:
-                    ?>
-                        
-                    
-                    <?php
-                    endif;
-                    ?>
-                    <div>
-                    <div class="row mx-auto text-center justify-content-center">
-                        <div class="col-8 offset-3 text-left">
-                            <p>From : <?php echo $row['from_location']?></p>
-                            <p>To : <?php echo $row['to_location']?></p>
-                            <p>Pickup : (<?php echo $row['pickup_date_start']?> - <?php echo $row['pickup_date_end']?>)</p>
-                            <p>Drop of : (<?php echo $row['dropoff_date_start']?> - <?php echo $row['dropoff_date_end']?>)</p>
-                            <?php
-                            $parcel_type = $row['parcel_type'];
-                            if ($parcel_type == 0) {
-                                echo '<p>Parcel type : Document</p>';
-                            } elseif ($parcel_type == 1) {
-                                echo '<p>Parcel type : Product</p>';
-                            } elseif ($parcel_type == 2) {
-                                echo '<p>Parcel type : Food</p>';
-                            } else {
-                                // Handle any other cases
-                                echo '<p>Parcel type : Others</p>';
-                            }
-                            ?>
-                            <?php
-                            $parcel_size = array("Small","Medium","Large","Extra Large");
-                            $weight_scales = array("Kg","Gram","Lbs");
-                            ?>
-                            <p>Parcel Size: <?php echo $parcel_size[$row['parcel_size']]; ?></p>
-                            <p>Weight Allowance: <?php echo $row['weight'];?> <?php echo $weight_scales[$row['weight_scale']]; ?></p>
+                <a href="./view_post.php?id=<?php echo $row['post_id']; ?>" style="text-decoration: none; color: inherit;">
+                    <div class="card-body text-center">
+                        <?php
+                        $post_type = $row['post_type'];
+                        if ($post_type == 0):
+                        ?>
+                        <h5 class='card-title'><b>I want to send</b></h5>
+                        <?php
+                        elseif ($post_type == 1) :
+                        ?>
+                        <h5 class='card-title'><b>I want to receive</b></h5>
+                        <?php
+                        elseif ($post_type == 2):
+                        ?>
+                        <h5 class='card-title'><b>I want to carry</b></h5>
+                        <?php
+                        else:
+                        ?>
                             
+                        
+                        <?php
+                        endif;
+                        ?>
+                        <div>
+                        <div class="row mx-auto text-center justify-content-center">
+                            <div class="col-8 offset-3 text-left">
+                                <?php
+                                $parcel_type = $row['parcel_type'];
+                                $parcel_type = ["Document","Product","Food"];
+                                $parcel_size = array("Small","Medium","Large","Extra Large");
+                                $weight_scales = array("Kg","Gram","Lbs");
+
+                                $date = new DateTime($row['pickup_date_start']);
+                                $row['pickup_date_start'] = $date->format('d-M-Y l');
+
+                                $date = new DateTime($row['pickup_date_end']);
+                                $row['pickup_date_end'] = $date->format('d-M-Y l');
+
+                                $date = new DateTime($row['dropoff_date_start']);
+                                $row['dropoff_date_start'] = $date->format('d-M-Y l');
+
+                                $date = new DateTime($row['dropoff_date_end']);
+                                $row['dropoff_date_end'] = $date->format('d-M-Y l');
+
+
+
+
+
+                                ?>
+                                <table>
+                                    <tr>
+                                        <td>From</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $row['from_location']?></td>
+                                    </tr>
+                                    <tr>
+                                        <td>To</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $row['to_location']?></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Pickup</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $row['pickup_date_start']?></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="pl-2"><?php echo $row['pickup_date_end']?></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        <td>Drop of</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $row['dropoff_date_start']?></td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td class="pl-2"><?php echo $row['dropoff_date_end']?></td>
+                                    </tr>
+                                    
+                                    <tr>
+                                        
+                                        <td>Parcel type</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $parcel_type[$row['parcel_type']]; ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Size</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $parcel_size[$row['parcel_type']]; ?></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Weight</td>
+                                        <td>:</td>
+                                        <td class="pl-2"><?php echo $row['weight'];?> <?php echo $weight_scales[$row['weight_scale']]; ?></td>
+                                    </tr>
+                                </table>
+                                
+                                
+                            </div>
+                        </div>
+                        
+                        
+                        
+                        
+
+                        </div>
+
+                        <?php
+                        if (!empty($row["details"])):
+                        ?>
+                            
+                                <p class="text-left"><?php echo $row["details"]?></p>
+                            
+                        <?php endif; ?>
+                    
+                    <div class="button-container post-card-footer">
+                        
+                        <?php
+                        $likeIdString = $row['like_id'];
+
+                        // Check if the user has already liked the post
+                        $likeIds = explode(",", $likeIdString);
+                        
+                        $sql = "SELECT comments.*, users.first_name, users.id as user_id, users.last_name, users.profile_pic FROM comments LEFT JOIN users ON comments.uid = users.id WHERE comments.post_id = ".$row["post_id"];
+                        $comments_results = $conn->query($sql);
+                        $num_comments = $comments_results->num_rows;
+
+                        $userLiked = isset($_SESSION["id"]) && in_array($_SESSION["id"], $likeIds);
+                        ?>
+                        <div class="d-flex align-items-center ">
+                            
+                            <p class="pt-3 pl-0 ml-0"><small>Likes: <span class="like-count" id="like-count-<?php echo $row["post_id"]?>"><?php echo count($likeIds)-1;?></span></small></p>
+                        </div>
+
+                        
+                        <div class="d-flex align-items-right ">
+                            <p class="pt-3 pl-0 ml-0"><small>Comments: <span  id="comment-count-<?php echo $row["post_id"]?>"><?php echo $num_comments;?></span></small></small></p>
                             
                         </div>
-                    </div>
-                    
-                    
-                    
-                    
-
-                    </div>
-
-                    <?php
-                    if (!empty($row["details"])):
-                    ?>
                         
-                            <p class="text-left"><?php echo $row["details"]?></p>
                         
-                    <?php endif; ?>
+                    </div>
+                </a>
+                <hr class="p-0 m-0">
                     
-                    
-                    
-                    
+                
                 </div>
-                <div class="card-footer d-flex justify-content-between pt-0 pb-0 ">
-                    <a class="btn " href="#" role="button">
-                        <p style="font-weight: bold; color: gray;"><small>Likes: 10</small></p>
-                    </a>
-                    <a class="btn" href="#" role="button">
-                        <p style="font-weight: bold; color: gray;"><small>Comments: 5</small></p>
-                    </a>
-                    <a class="btn" href="#" role="button">
-                        <p style="font-weight: bold; color: gray;"><small>Likes: 10</small></p>
-                    </a>
-                </div>
+                
+                
+
+
+
 
             </div>
             
@@ -819,14 +968,15 @@ else{
         <div class="card-body">
             <h3>Review</h3>
             <?php
-            $sql = "SELECT review.*, users.first_name, users.last_name, users.country FROM review INNER JOIN users ON review.uid = users.id WHERE review.uid = 46 ORDER BY id desc";
+            
+            $sql = "SELECT review.*, users.id as user_id,users.first_name, users.last_name, users.country,users.profile_pic FROM review LEFT JOIN users ON review.review_id = users.id WHERE review.uid = {$user_id} ORDER BY id desc";
             $reviews = $conn->query($sql);
             $tot_review = $reviews->num_rows;
             
             ?>
             <p><small><b><?php echo $tot_review; ?> review avaialble for this profile</b></small></p>
             <div class="row pl-3">
-                <div >
+                <div class="top-aligned">
                     <div class="rate">
                         <?php
                             // Assume $avg_star_int is the integer part of the average star rating
@@ -845,20 +995,20 @@ else{
                         ?>
                     </div>
                 </div>
-                <p><small><b><?php echo $avg_star;?></b> | 2 months ago</small></p>
+                <p class="top-aligned"><small><b><?php echo $avg_star;?></b></small></p>
             </div>
 
             <table class="mb-5">
                 <?php
-                $sql = "SELECT star, AVG(star) AS avg_star, COUNT(*) AS total FROM review WHERE uid = 46 GROUP BY star ORDER BY star desc;";
+                $sql = "SELECT star, AVG(star) AS avg_star, COUNT(*) AS total FROM review WHERE uid = {$user_id} GROUP BY star ORDER BY star desc;";
                 $result = $conn->query($sql);
                 while($row=$result->fetch_assoc()):
                     
                 ?>
                 <tr>
                     
-                    <td><small><?php echo $row['star']?> Star</small></td>
-                    <td>
+                    <td class="top-aligned"><small><?php echo $row['star']?> Star</small></td>
+                    <td class="top-aligned">
                         <div class="rating-bar">
                             <div class="rating-bar-filled" style="width:<?php echo ($row['avg_star'] / 5) * 100; ?>%;"></div>
                         </div>
@@ -877,7 +1027,16 @@ else{
                     <div class="review-card-title">
                         
                         <div class="d-flex">
-                            <img src="<?php echo $profile_pic;?>" alt="Profile Image" class="rating-profile-image mr-2">
+                            <?php
+                            
+                            if(isset($row['profile_pic']) && !empty($row['profile_pic'])) {
+                        
+                                $review_profile_pic = "uploads/{$row['profile_pic']}";
+                            } else {
+                                $review_profile_pic = "assets/images/no_person.jpg";
+                            }
+                            ?>
+                            <img src="<?php echo $review_profile_pic;?>" alt="Profile Image" class="rating-profile-image mr-2">
                             <div>
                                 <p class="ml-2 mb-0"><b><?php echo ucfirst(strtolower($row['first_name']))." ".ucfirst(strtolower($row['last_name']))?></b></p>
                                 <div class="country-info d-flex align-items-center"> <!-- Added container for country info -->
@@ -934,6 +1093,9 @@ else{
 
 
 <!-- Add this modal code before the closing </body> tag -->
+<?php
+if(!isset($user_row)):
+?>
 <div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -953,47 +1115,6 @@ else{
         </div>
     </div>
 </div>
-
-
-
-<div class="modal fade" id="ReviewModal" tabindex="-1" aria-labelledby="ReviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <form id="reviewForm" method="post" action="./api/add_review.php" >
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="ReviewModalLabel">Write a Review</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    
-                        <input type="hidden" class="form-control" id="uid" name="uid" value="<?php echo isset($user_row['id']) ? $user_row['id'] : ''; ?>">
-                        <div class="form-group">
-                            <label for="review">Review:</label>
-                            <textarea class="form-control" id="review" name="review" rows="4"></textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="star">Star Rating:</label>
-                            <input type="number" class="form-control" id="star" name="star" min="1" max="5">
-                        </div>
-                        
-                    
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary" >Submit Review</button>
-                </div>
-            </div>
-        </form>
-    </div>
-    
-</div>
-
-
-
-
 
 <div id="editModal" class="modal edit-modal">
     
@@ -1131,6 +1252,51 @@ else{
     
   </div>
 </div>
+<?php
+else:
+?>
+<div class="modal fade" id="ReviewModal" tabindex="-1" aria-labelledby="ReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="reviewForm" method="post" action="./api/add_review.php" >
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ReviewModalLabel">Write a Review</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    
+                        <input type="hidden" class="form-control" id="uid" name="uid" value="<?php echo isset($user_row['id']) ? $user_row['id'] : ''; ?>">
+                        <div class="form-group">
+                            <label for="review">Review:</label>
+                            <textarea class="form-control" id="review" name="review" rows="4"></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="star">Star Rating:</label>
+                            <input type="number" class="form-control" id="star" name="star" min="1" max="5">
+                        </div>
+                        
+                    
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" >Submit Review</button>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+</div>
+<?php
+endif;
+?>
+
+
+
+
+
 
 
 
@@ -1154,11 +1320,20 @@ else{
             var sectionClass = $(this).attr("class").split(' ')[1];
             
             // Show the corresponding section
-            $("." + sectionClass + "-section").slideToggle();
+            $("." + sectionClass + "-section").show();
         });
+        <?php
+        if(isset($section)):
+        ?>
+        $(".about-section, .post-section, .review-section").hide();
+        $("." + "<?php echo $section;?>").show();
+        <?php
+        endif;
+        ?>
     });
     function toggleSection(section) {
         $('.section-content').each(function() {
+            
             if ($(this).hasClass(section + '-section')) {
                 $(this).toggleClass('active');
             } else {
@@ -1166,7 +1341,9 @@ else{
             }
         });
     }
-
+    <?php
+    if(!isset($user_row)):
+    ?>
 
     function loadCountries() {
         const countrySelect = document.getElementById('countrySelect');
@@ -1211,11 +1388,6 @@ else{
     function changeImage() {
         $('#imageModal').modal('show');
     }
-
-    function showReviewModal() {
-        $('#ReviewModal').modal('show');
-    }
-
     // Function to handle image upload
     function uploadImage() {
         // Get the selected image file
@@ -1259,7 +1431,40 @@ else{
             alert('Please select an image.');
         }
     }
+    <?php
+    else:
+    ?>
+    function showReviewModal() {
+        $('#ReviewModal').modal('show');
+    }
+    <?php
+    endif;
+    ?>
+    
 
+    
+
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var profileCountry = document.querySelector('.profile-country-sm');
+        var popup = document.getElementById('country-popup');
+
+        profileCountry.addEventListener('click', function() {
+            if (popup.style.display === 'none' || popup.style.display === '') {
+                popup.style.display = 'block';
+            } else {
+                popup.style.display = 'none';
+            }
+        });
+
+        // Close the popup if clicked outside
+        document.addEventListener('click', function(event) {
+            if (!profileCountry.contains(event.target) && !popup.contains(event.target)) {
+                popup.style.display = 'none';
+            }
+        });
+    });
 </script>
 
 <!-- JavaScript to handle modal functionality -->

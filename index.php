@@ -15,6 +15,8 @@ include_once("country_codes.php");
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+
     <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css"
@@ -169,10 +171,11 @@ include_once("country_codes.php");
             
         }
         .btn-parcel-type:hover,
-        .btn-parcel-type:active {
+        .btn-parcel-type.active {
+            
             background-color: #018CA2;
             color: white;
-            border-color: #015F6A;
+            border-color: #015F6;
         }
         .btn-parcel-type{
             background-color: #fff;
@@ -263,8 +266,8 @@ include_once("country_codes.php");
         .post-card-footer {
             display: flex;
             justify-content: space-between;
-            padding: 10px;
-            background-color: #f8f9fa;
+            padding: 3px;
+            
         }
         .button-container, .number-container {
             display: flex;
@@ -305,13 +308,17 @@ include_once("country_codes.php");
             flex: 1;
         }
 
-        .comment-item b {
+        .comment-item-username {
             color: #333;
         }
 
-        .comment-item p {
+        .comment-item-text {
             margin-top: 5px;
             color: #666;
+            max-width: 90%; /* Ensure it takes the full width of its parent by default */
+            word-wrap: break-word; /* Break long words to wrap onto the next line */
+            
+            flex: 1; /* Allow it to take available space */
         }
 
         .comment-box {
@@ -380,6 +387,7 @@ include_once("country_codes.php");
 
         
     </style>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body >
 <?php include 'navbar.php'; ?>
@@ -392,10 +400,10 @@ include_once("country_codes.php");
         </div>
     </div>
     
-    <div class="container mt-5 parent-div">
+    <div class=" container-lg container-md-fluid conatiner-sm-fluid mt-5 parent-div">
         <form id="searchForm" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body form-card">
 
                     <input type="hidden" id="from_country" name="from_country" value="">
                     <input type="hidden" id="to_country" name="to_country" value="">
@@ -407,7 +415,7 @@ include_once("country_codes.php");
                     <input type="hidden" id="dropoff_date_end" name="dropoff_date_end" value="">
                     <?php
                     $search_invalid = FALSE;
-                    if ($_SERVER["REQUEST_METHOD"] == "POST" && (!isset($_POST["from_country"]) || empty($_POST["from_country"])) || (!isset($_POST["to_country"]) || empty($_POST["to_country"]))):
+                    if ($_SERVER["REQUEST_METHOD"] == "POST" && ((!isset($_POST["from_country"]) || empty($_POST["from_country"])) || (!isset($_POST["to_country"]) || empty($_POST["to_country"])))):
                         $search_invalid = TRUE;
                     ?>
                     <div class="text-center">
@@ -416,7 +424,7 @@ include_once("country_codes.php");
                     <?php
                     endif;
                     ?>
-                    <div class="text-center">
+                    <div class="d-flex justify-content-center form-row">
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="post_type" id="inlineRadio1" value="0">
                             <label class="form-check-label" for="inlineRadio1"><b>I want to send</b></label>
@@ -430,97 +438,101 @@ include_once("country_codes.php");
                             <label class="form-check-label" for="inlineRadio3"><b>I want to carry</b></label>
                         </div>
                     </div>
-                    <div class="row pt-4">
-                        <div class="col-sm-6 col-lg-3" onclick="openPopup(0)">
-                            <label for="">From</label>
-                            <div class="card">
-                                
-                                <p id="fromValue" class="p-2">Select Pickup City</p>
+                    <div class="row pt-4 form-row">
+                        <div class="col-6  col-lg-3 form-col" onclick="openPopup(0)">
+                            <div class="custom-input">
+                                <label for="">From</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="fromValue" class="p-2">Select City</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-lg-3" onclick="openPopup(1)">
-                            <label for="">To</label>
-                            <div class="card">
-                                
-                                <p id="toValue" class="p-2">Select Destination City</p>
+                        <div class="col-6  col-lg-3 form-col" onclick="openPopup(1)">
+                            <div class="custom-input">
+                                <label for="">To</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="toValue" class="p-2">Select City</p>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        <div class="col-6 col-lg-3 form-col"  id="pickup_date_range">
+                            <div class="custom-input">
+                                <label for="">Pickup (Range)</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="pickup_date_range_val" class="p-2">Chose a date</p>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        <div class="col-6 col-lg-3 form-col" id="destination_date_range">
+                            <div class="custom-input">
+                                <label for="">Drop off (Range)</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="destination_date_range_val" class="p-2">Chose a date</p>
+                                </div>
                             </div>
                             
                         </div>
-                        <div class="col-sm-6 col-lg-3"  id="pickup_date_range">
-                            <label for="">Pickup (Range)</label>
-                            <div class="card">
-                                
-                                <p id="pickup_date_range_val" class="p-2">Chose a date</p>
+                    </div>
+                    <div class="d-flex justify-content-center parcel-type">
+                        <div class="card parcel-type-card text-center mx-auto mt-4" style="max-width: 450px;">
+                            <div class="card-title">
+                                <label for="">Parcel Type</label>
+                            </div>
+                            <div class="card-body parcel-card-body">
+                                <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-sm btn-parcel-type mr-3">
+                                        <input  type="radio" name="parcel_type" id="option1" value="0" autocomplete="off"> Document
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-3">
+                                        <input type="radio" name="parcel_type" id="option2" value="1" autocomplete="off"> Product
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-3">
+                                        <input type="radio" name="parcel_type" id="option3" value="2" autocomplete="off"> Food
+                                    </label>
+                                    <label class="btn btn-parcel-type ">
+                                        <input type="radio" name="parcel_type" id="option4" value="3" autocomplete="off"> Others
+                                    </label>
+                                </div>
                             </div>
                             
                         </div>
-                        <div class="col-sm-6 col-lg-3" id="destination_date_range">
-                            <label for="">Drop off (Range)</label>
-                            <div class="card">
-                                
-                                <p id="destination_date_range_val" class="p-2">Chose a date</p>
+                        <div class="card parcel-type-card text-center mx-auto mt-4" style="max-width: 450px;">
+                            <div class="card-title">
+                                <label for="">Parcel Size</label>
+                            </div>
+                            <div class="card-body parcel-card-body">
+                                <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-sm btn-parcel-type mr-2">
+                                        <input type="radio" name="parcel_size" id="option1" value="0" autocomplete="off"> Small
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-2">
+                                        <input type="radio" name="parcel_size" id="option2" value="1" autocomplete="off"> Medium
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-2">
+                                        <input type="radio" name="parcel_size" id="option3" value="2" autocomplete="off"> Large
+                                    </label>
+                                    <label class="btn btn-parcel-type">
+                                        <input type="radio" name="parcel_size" id="option4" value="3" autocomplete="off"> Extra Large
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="text-center pt-4">
-                                <div class="card parcel-type-card text-center mx-auto" style="max-width: 400px;">
-                                    <div class="card-title">
-                                        <label for="">Parcel Type</label>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-sm btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option1" value="0" autocomplete="off"> Document
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option2" value="1" autocomplete="off" checked> Product
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option3" value="2" autocomplete="off"> Food
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option4" value="3" autocomplete="off"> Others
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center pt-4">
-                                <div class="card parcel-type-card text-center mx-auto" style="max-width: 400px;">
-                                    <div class="card-title">
-                                        <label for="">Parcel Size</label>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-sm btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option1" value="0" autocomplete="off"> Small
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option2" value="1" autocomplete="off" checked> Medium
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option3" value="2" autocomplete="off"> Larnge
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option4" value="3" autocomplete="off"> Extra Large
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-center d-flex pt-4">
+                    <div class="text-center d-flex pt-4 form-row">
                         <div class="row justify-content-center mx-auto">
                             
                             <div class="input-group ">
                             <label for="" class="pr-3"><b>Weight: </b></label>
-                                <input type="number" name="weight"  class="form-control">
+                                <input type="number" name="weight"  class="form-control" style="max-width: 80px">
                                 <div class="form-check form-check-inline ml-3">
                                     <input class="form-check-input" type="radio" name="weight_scale" id="inlineRadio1" value="0">
                                     <label class="form-check-label" for="inlineRadio1"><b>Kg</b></label>
@@ -771,7 +783,7 @@ include_once("country_codes.php");
             ?>
             
             
-            <h4 class="text-center">All Post</h4>
+            
             
             
 
@@ -779,7 +791,7 @@ include_once("country_codes.php");
         </div>
     </div>
     <div class="row pt-4">
-        <div class="col-md-3 pb pt-4 ">
+        <div class="col-md-3 col-sm-12 pb pt-4 mt-2">
             <?php
                 if(isset($_SESSION['id']) && !empty($_SESSION['profile_pic'])) {
                     
@@ -792,7 +804,7 @@ include_once("country_codes.php");
             if (isset($_SESSION['id'])):
             ?>
                
-            <div class="card pt-3">
+            <div class="card pt-3 mt-5">
                 <div class="text-center">
                     <img src="<?php echo $profile_pic; ?>" alt="" style="width: 150px; height: 150px; border-radius: 50%;" />
                     <h5><b><?php echo ucfirst(strtolower($_SESSION['first_name']))." ".ucfirst(strtolower($_SESSION['last_name']))?> </b></h5>
@@ -842,13 +854,13 @@ include_once("country_codes.php");
             endif;
             ?>
         </div>
-        <div class="col-md-8 col-sm-8 pb-2 pt-4" style="max-width: 800px;">
+        <div class="col-md-8 col-sm-12 pb-2 pt-4" style="max-width: 800px;">
             
-            <div class="row pl-3 rounded-buttons" style="max-width: 800px;">
-                <button class="btn btn-outline-info fill-on-hover mr-3" onclick="showPosts('')">All Posts</button>
-                <button class="btn btn-outline-info fill-on-hover mr-3" onclick="showPosts('post-type-0')">Sender</button>
-                <button class="btn btn-outline-info fill-on-hover mr-3" onclick="showPosts('post-type-1')">Receiver</button>
-                <button class="btn btn-outline-info fill-on-hover mr-3" onclick="showPosts('post-type-2')">Carrier</button>
+            <div class="row pl-3 rounded-buttons d-flex justify-content-center" style="max-width: 800px;">
+                <button class="btn btn-outline-info fill-on-hover mr-2" onclick="showPosts('')">All Posts</button>
+                <button class="btn btn-outline-info fill-on-hover mr-2" onclick="showPosts('post-type-0')">Sender</button>
+                <button class="btn btn-outline-info fill-on-hover mr-2" onclick="showPosts('post-type-1')">Receiver</button>
+                <button class="btn btn-outline-info fill-on-hover mr-2" onclick="showPosts('post-type-2')">Carrier</button>
             </div>
             
             <?php
@@ -908,8 +920,8 @@ include_once("country_codes.php");
 
                                 
                             ?>
-                            <div>
-                                <a style="text-decoration: none;color: inherit;font-size:18px;" href="<?php echo "./profile.php?id=".$row['id']?>"><?php echo $row['first_name']." ".$row['last_name']?></a>
+                            <div class="pl-2">
+                                <a style="text-decoration: none;color: inherit;font-size:18px;" href="<?php echo "./profile.php?id=".$row['id']?>"><p class="profile-name mb-0"><?php echo $row['first_name']." ".$row['last_name']?></p></a>
                                 <p class="mb-0" style="font-size: 10px;"><?php echo $elapsed_result; ?></p>
                             </div>
                             
@@ -945,29 +957,79 @@ include_once("country_codes.php");
                     <div>
                     <div class="row mx-auto text-center justify-content-center">
                         <div class="col-8 offset-3 text-left">
-                            <p>From : <?php echo $row['from_location']?></p>
-                            <p>To : <?php echo $row['to_location']?></p>
-                            <p>Pickup : (<?php echo $row['pickup_date_start']?> - <?php echo $row['pickup_date_end']?>)</p>
-                            <p>Drop of : (<?php echo $row['dropoff_date_start']?> - <?php echo $row['dropoff_date_end']?>)</p>
                             <?php
                             $parcel_type = $row['parcel_type'];
-                            if ($parcel_type == 0) {
-                                echo '<p>Parcel type : Document</p>';
-                            } elseif ($parcel_type == 1) {
-                                echo '<p>Parcel type : Product</p>';
-                            } elseif ($parcel_type == 2) {
-                                echo '<p>Parcel type : Food</p>';
-                            } else {
-                                // Handle any other cases
-                                echo '<p>Parcel type : Others</p>';
-                            }
-                            ?>
-                            <?php
+                            $parcel_type = ["Document","Product","Food"];
                             $parcel_size = array("Small","Medium","Large","Extra Large");
                             $weight_scales = array("Kg","Gram","Lbs");
+
+                            $date = new DateTime($row['pickup_date_start']);
+                            $row['pickup_date_start'] = $date->format('d-M-Y l');
+
+                            $date = new DateTime($row['pickup_date_end']);
+                            $row['pickup_date_end'] = $date->format('d-M-Y l');
+
+                            $date = new DateTime($row['dropoff_date_start']);
+                            $row['dropoff_date_start'] = $date->format('d-M-Y l');
+
+                            $date = new DateTime($row['dropoff_date_end']);
+                            $row['dropoff_date_end'] = $date->format('d-M-Y l');
+
+
+
+
+
                             ?>
-                            <p>Parcel Size: <?php echo $parcel_size[$row['parcel_size']]; ?></p>
-                            <p>Weight Allowance: <?php echo $row['weight'];?> <?php echo $weight_scales[$row['weight_scale']]; ?></p>
+                            <table>
+                                <tr>
+                                    <td>From</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $row['from_location']?></td>
+                                </tr>
+                                <tr>
+                                    <td>To</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $row['to_location']?></td>
+                                </tr>
+                                <tr>
+                                    <td>Pickup</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $row['pickup_date_start']?></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="pl-2"><?php echo $row['pickup_date_end']?></td>
+                                </tr>
+                                
+                                <tr>
+                                    <td>Drop of</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $row['dropoff_date_start']?></td>
+                                </tr>
+                                <tr>
+                                    <td></td>
+                                    <td></td>
+                                    <td class="pl-2"><?php echo $row['dropoff_date_end']?></td>
+                                </tr>
+                                
+                                <tr>
+                                    
+                                    <td>Parcel type</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $parcel_type[$row['parcel_type']]; ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Size</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $parcel_size[$row['parcel_type']]; ?></td>
+                                </tr>
+                                <tr>
+                                    <td>Weight</td>
+                                    <td>:</td>
+                                    <td class="pl-2"><?php echo $row['weight'];?> <?php echo $weight_scales[$row['weight_scale']]; ?></td>
+                                </tr>
+                            </table>
                             
                             
                         </div>
@@ -986,44 +1048,66 @@ include_once("country_codes.php");
                             <p class="text-left"><?php echo $row["details"]?></p>
                         
                     <?php endif; ?>
+                
+                <div class="button-container post-card-footer">
                     
+                    <?php
+                    $likeIdString = $row['like_id'];
+
+                    // Check if the user has already liked the post
+                    $likeIds = explode(",", $likeIdString);
                     
+                    $sql = "SELECT comments.*, users.first_name, users.id as user_id, users.last_name, users.profile_pic FROM comments LEFT JOIN users ON comments.uid = users.id WHERE comments.post_id = ".$row["post_id"];
+                    $comments_results = $conn->query($sql);
+                    $num_comments = $comments_results->num_rows;
+
+                    $userLiked = isset($_SESSION["id"]) && in_array($_SESSION["id"], $likeIds);
+                    ?>
+                    <div class="d-flex align-items-center ">
+                        
+                        <p class="pt-3 pl-0 ml-0"><small>Likes: <span class="like-count" id="like-count-<?php echo $row["post_id"]?>"><?php echo count($likeIds)-1;?></span></small></p>
+                    </div>
+
+                    
+                    <div class="d-flex align-items-right ">
+                        <p class="pt-3 pl-0 ml-0"><small>Comments: <span  id="comment-count-<?php echo $row["post_id"]?>"><?php echo $num_comments;?></span></small></small></p>
+                        
+                    </div>
                     
                     
                 </div>
-                <div class="card-footer">
-                    <div class="button-container post-card-footer">
+                <hr class="p-0 m-0">
+                    
+                <div class="button-container post-card-footer">
                         
-                        <?php
-                        $likeIdString = $row['like_id'];
-
-                        // Check if the user has already liked the post
-                        $likeIds = explode(",", $likeIdString);
-                        
-                        $sql = "SELECT comments.*, users.first_name, users.id, users.last_name, users.profile_pic FROM comments LEFT JOIN users ON comments.uid = users.id WHERE comments.post_id = ".$row["post_id"];
-                        $comments_results = $conn->query($sql);
-                        $num_comments = $comments_results->num_rows;
-
-                        $userLiked = isset($_SESSION["id"]) && in_array($_SESSION["id"], $likeIds);
-                        ?>
-                        <a class="btn like-btn" href="#" role="button" data-target="<?php echo $row["post_id"]?>">
-                        
-                            <i class="fas fa-thumbs-up <?php echo $userLiked ? 'liked-icon' : '' ?>"></i>
+                    
+                    <div class="d-flex align-items-center ">
+                        <a class="btn   like-btn pr-0" href="#" role="button" data-target="<?php echo $row["post_id"]?>">
+                            
+                            <i class="fas fa-thumbs-up <?php echo $userLiked ? 'liked-icon' : '' ?>" id="like-icon-<?php echo $row["post_id"]?>" style="font-size: 20px;"></i>
                             
                         </a>
-                        <a class="btn comment-btn" href="#" role="button" data-target="<?php echo $row["post_id"]?>">
+                        <p class="pt-3 pl-0 ml-0"><small>Like</small></p>
+                    </div>
+
+                    <div class="d-flex align-items-center ">
+                        <a class="btn comment-btn pr-0" href="#" role="button" data-target="<?php echo $row["post_id"]?>">
                             <i class="fas fa-comments"></i> 
                         </a>
-                        <a class="btn share-btn" href="#" role="button">
+                        <p class="pt-3 pl-0 ml-0"><small>Comment</small></small></p>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <a class="btn share-btn pr-0" href="#" role="button">
                             <i class="fas fa-share"></i>
                         </a>
+                        <p class="pt-3 pl-0 ml-0"><small>Share</small></p>
                     </div>
-                    <div class="number-container post-card-footer">
-                    <p><small>Likes: <span class="like-count" id="like-count-<?php echo $row["post_id"]?>"><?php echo count($likeIds)-1;?></span></small></p>
-                        <p><small>Comments: <span  id="comment-count-<?php echo $row["post_id"]?>"><?php echo $num_comments;?></span></small></small></p>
-                        <p><small>Shares: 3</small></p>
-                    </div>
+                    
+                    
                 </div>
+                </div>
+                
                 <div class="comment-post" style="display:none;" data-post-id="<?php echo $row['post_id']; ?>" id="comments-<?php echo $row['post_id']; ?>">
                     <div id='comment-list-<?php echo $row['post_id']; ?>'>
                         <?php
@@ -1037,9 +1121,9 @@ include_once("country_codes.php");
                         ?>
                         <div class="comment-item">
                             <img src="<?php echo $comment_profile_pic; ?>" alt="" style="width: 30px; height: 30px; border-radius: 50%;" />
-                            <div>
-                                <b><?php echo ucfirst(strtolower($comment_row['first_name']))." ".ucfirst(strtolower($comment_row['last_name']))?></b>
-                                <p><?php echo $comment_row['comment']; ?></p>
+                            <div class="comment-item-right container">
+                                <a style="text-decoration: none;color: inherit;" href="<?php echo "./profile.php?id=".$comment_row['user_id']?>" ><b class="comment-item-username"><?php echo ucfirst(strtolower($comment_row['first_name']))." ".ucfirst(strtolower($comment_row['last_name']))?></a></b>
+                                <p class="comment-item-text"><?php echo $comment_row['comment']; ?></p>
                             </div>
                         </div>
                         <?php
@@ -1325,8 +1409,9 @@ include_once("country_codes.php");
                 if (result.success === 1) {
                     // Like added successfully, update the like count
                     likeCountSpan.text(result.likes);
-                    $(this).find('.fa-thumbs-up').addClass('liked-icon');
-                    $(this).find('.fa-thumbs-up').css('color', '#007bff');
+                    var likeIcon = $("#like-icon-"+ target);
+                    likeIcon.addClass('liked-icon');
+                    likeIcon.find('.fa-thumbs-up').css('color', '#007bff');
                 } else if (result.success === 0) {
                     // Failed to add like, display an error message
                     alert(result.message);

@@ -1,44 +1,57 @@
 <?php
-// Start the session
 session_start();
-
-// Other PHP code goes here
-?>
-<!DOCTYPE html>
-<html lang="en">
-<?php
+if(!isset($_SESSION['id'])){
+    header("Location: login.php");
+}
 include 'db_connect.php';
 $error = "";
 $registered = false; 
+
+// Function to resize image
+function resize_image($file, $max_resolution){
+    if(file_exists($file)){
+        $original_image = imagecreatefromstring(file_get_contents($file));
+        
+        $original_width = imagesx($original_image);
+        $original_height = imagesy($original_image);
+        
+        $ratio = $original_width / $original_height;
+        
+        if($original_width > $original_height) {
+            $new_width = $max_resolution;
+            $new_height = $max_resolution / $ratio;
+        } else {
+            $new_height = $max_resolution;
+            $new_width = $max_resolution * $ratio;
+        }
+        
+        if($original_image) {
+            $new_image = imagecreatetruecolor($new_width, $new_height);
+            imagecopyresampled($new_image, $original_image, 0, 0, 0, 0, $new_width, $new_height, $original_width, $original_height);
+            return $new_image;
+        }
+    }
+    return false;
+}
+
 // Check if the form is submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Retrieve form data
-    
     $contact_no = $_POST['contact_no'];
     $address = $_POST['address'];
-
     $country = $_POST['country'];
     $city = $_POST['city'];
     $gender = $_POST['gender'];
     $zip = $_POST['zip'];
 
-//     echo "Email: " . $email . "<br>";
-// echo "Contact Number: " . $contact_no . "<br>";
-// echo "Address: " . $address . "<br>";
-
-// echo "Country: " . $country . "<br>";
-// echo "City: " . $city . "<br>";
-// echo "Gender: " . $gender . "<br>";
-// echo "Zip: " . $zip . "<br>";
-    
-    // Process verification status, you may have additional verification steps
+    // Process verification status
     $verification_status = "verified"; // Set verification status, you may change this based on your verification process
     
     // File handling
     $nid_file = $_FILES['nid'];
     $passport_file = $_FILES['passport'];
 
-    
+    // Validate form data
     if (empty($contact_no)) {
         $error .= "Contact number is required! ";
     }
@@ -51,87 +64,80 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($city)) {
         $error .= "City is required! ";
     }
-    
     if (empty($zip)) {
         $error .= "Zip code is required! ";
     }
-    
-
     if (empty($_FILES['nid']['name']) && empty($_FILES['passport']['name'])) {
         // Check if at least one of nid or passport is present
         $error = "You must upload at least one of NID or Passport!";
     }
+
     if(empty($error)){
-        // Directory where uploaded files will be saved
-        $upload_directory = "uploads/";
+        // Process and encode NID image
+        $nid_base64 = '';
+        if (!empty($nid_file['tmp_name'])) {
+            $resized_nid = resize_image($nid_file['tmp_name'], 800);
+            ob_start();
+            imagejpeg($resized_nid);
+            $nid_contents = ob_get_contents();
+            ob_end_clean();
+            $nid_base64 = base64_encode($nid_contents);
+        }
 
-        // Move uploaded files to the server
-        $nid_file_path = $upload_directory . basename($nid_file['name']);
-        $passport_file_path = $upload_directory . basename($passport_file['name']);
+        // Process and encode Passport image
+        $passport_base64 = '';
+        if (!empty($passport_file['tmp_name'])) {
+            $resized_passport = resize_image($passport_file['tmp_name'], 800);
+            ob_start();
+            imagejpeg($resized_passport);
+            $passport_contents = ob_get_contents();
+            ob_end_clean();
+            $passport_base64 = base64_encode($passport_contents);
+        }
 
-        if (move_uploaded_file($nid_file['tmp_name'], $nid_file_path) || move_uploaded_file($passport_file['tmp_name'], $passport_file_path)) {
-            // Files were successfully uploaded
-            // Proceed with database update
-            // Prepare SQL statement to update verification status
-            $sql = "UPDATE users SET verified = ?, 
-                        
-                        contact_no = ?, 
-                        address = ?, 
-                        country = ?, 
-                        city = ?, 
-                        gender = ?, 
-                        zip = ?, 
-                        nid = ?, 
-                        passport = ?,
-                        verified = 1  
-                    WHERE id = ?";
+        // Prepare SQL statement to update verification status
+        $sql = "UPDATE users SET  
+                    contact_no = ?, 
+                    address = ?, 
+                    country = ?, 
+                    city = ?, 
+                    gender = ?, 
+                    zip = ?, 
+                    nid = ?, 
+                    passport = ?,
+                    verified = 1  
+                WHERE id = ?";
 
-            // Prepare the SQL statement
-            $stmt = $conn->prepare($sql);
+        // Prepare the SQL statement
+        $stmt = $conn->prepare($sql);
 
-            // Bind parameters
-            $stmt->bind_param("sssssssssi", $verification_status,  $contact_no, $address, $country, $city, $gender, $zip, $nid_file_path, $passport_file_path, $_SESSION['id']);
-                    
-            // Execute the statement
-            if ($stmt->execute()) {
-                // Verification successful
-                $verified = true;
-
+        // Bind parameters
+        $stmt->bind_param("ssssssssi", $contact_no, $address, $country, $city, $gender, $zip, $nid_base64, $passport_base64, $_SESSION['id']);
                 
-                $_SESSION['contact_no'] = $contact_no;
-                
-               
-                $_SESSION['country'] = $country;
-                $_SESSION['city'] = $city;
-                
-                $_SESSION['address'] = $address;
-                
-                $_SESSION['zip'] = $zip;
-                
-                $_SESSION['verified'] = 1;
-                header("Location: index.php");
-                
-
-            } else {
-                // Verification failed
-                $error =  $conn->error;
-                echo "Error: " . $conn->error;
-            }
+        // Execute the statement
+        if ($stmt->execute()) {
+            
+            
+            // Verification successful
+            $verified = true;
+            $_SESSION['contact_no'] = $contact_no;
+            $_SESSION['country'] = $country;
+            $_SESSION['city'] = $city;
+            $_SESSION['address'] = $address;
+            $_SESSION['zip'] = $zip;
+            $_SESSION['verified'] = 1;
+            header("Location: index.php");
         } else {
-            // File upload failed
-            echo "File upload failed!";
+            // Verification failed
+            $error = $conn->error;
+            echo "Error: " . $conn->error;
         }
     }
-
-    
-    
-    
-    
 }
 
-// Close the connection
-$conn->close();
+
 ?>
+
 
 <head>
     <meta charset="UTF-8">
@@ -234,6 +240,12 @@ $conn->close();
             width: 340px;
             display: inline-block;
         }
+        .navbar-profile-image {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
 
         
 
@@ -246,7 +258,7 @@ $conn->close();
     <link rel="icon" href="./Imgs/icons/Vector.png" />
     
     
-    <script defer src="js/script.js"></script>
+    
     <script defer src="js/countries.js"></script>
 
     <link
@@ -346,7 +358,7 @@ $conn->close();
                       </div>
                       <div class="col-6 mb-3">
                         <label for="citySelect" class="form-label">States/City*</label>
-                        <select id="citySelect" name="city" class="form-select" onchange="applySelection()" required>
+                        <select id="citySelect" name="city" class="form-select" required>
                             <option value="">Select City</option>
                             <!-- City options will be populated dynamically based on the selected country -->
                         </select>
@@ -426,6 +438,48 @@ if ($registered){
 }
 ?>
 <script>
+    function loadCountries() {
+    const countrySelect = document.getElementById('countrySelect');
+
+    // Populate country dropdown
+    const option = document.createElement('option');
+    option.value = "";
+    option.textContent = "--";
+    countrySelect.appendChild(option);
+    for (const country in countries) {
+        const option = document.createElement('option');
+        option.value = country;
+        option.textContent = country;
+        countrySelect.appendChild(option);
+    }
+    }
+
+    // Function to update city dropdown based on the selected country
+    function updateCityDropdown() {
+    const countrySelect = document.getElementById('countrySelect');
+    const citySelect = document.getElementById('citySelect');
+    const selectedCountry = countrySelect.value;
+
+    // Clear existing options
+    citySelect.innerHTML = '';
+
+    // Populate city dropdown based on the selected country
+    const cities = countries[selectedCountry];
+    const option = document.createElement('option');
+    option.value = "";
+    option.textContent = "--";
+    citySelect.appendChild(option);
+    if (cities) {
+        for (const city of cities) {
+            const option = document.createElement('option');
+            option.value = city;
+            option.textContent = city;
+            citySelect.appendChild(option);
+        }
+    }
+    }
+</script>
+<script>
     /* JS comes here */
     (function() {
 
@@ -491,7 +545,7 @@ if ($registered){
             photo.setAttribute('src', data);
         }
 
-        function takepicture() {
+        async function takepicture() {
             var context = canvas.getContext('2d');
             if (width && height) {
                 canvas.width = width;
@@ -499,7 +553,23 @@ if ($registered){
                 context.drawImage(video, 0, 0, width, height);
 
                 var data = canvas.toDataURL('image/png');
+                
+                const img = document.getElementById('photo')
                 photo.setAttribute('src', data);
+                const detection = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+                console.log(detection);
+                if (detection && detection.descriptor) {
+                    
+                } else {
+                    
+                    Swal.fire({
+                        icon: "error",
+                        title: "No Face Detected!",
+                        text: "System Couldn't Find your face. Please check you camera lighting & capture from close diatance.",
+                        confirmButtonText: "OK"
+                    });
+                    photo.setAttribute('src', "");
+                }
             } else {
                 clearphoto();
             }
@@ -582,6 +652,7 @@ Promise.all([
 ]).then(start)
 
 async function start() {
+    console.log("start");
   const container = document.createElement('div')
   container.style.position = 'relative'
   document.body.append(container)
@@ -591,63 +662,73 @@ async function start() {
   let canvas
   document.body.append('Loaded')
   verifyBtn.addEventListener('click', async () => {
-    
-    console.log("clicked");
-    const img = document.getElementById('photo')
-    const detections1 = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
-    const descriptions = []
-    descriptions.push(detections1.descriptor)
-    const labeledFaceDescriptors = new faceapi.LabeledFaceDescriptors("Match", descriptions)
-    const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
+    try {
+        console.log("clicked");
+        const img = document.getElementById('photo')
+        const detections1 = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
+        const descriptions = []
+        console.log(detections1);
+        descriptions.push(detections1.descriptor)
+        const labeledFaceDescriptors = new faceapi.LabeledFaceDescriptors("Match", descriptions)
+        const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.6)
 
-    image = await faceapi.bufferToImage(imageUpload.files[0])
-    container.append(image)
-    canvas = faceapi.createCanvasFromMedia(image)
-    container.append(canvas)
-    const displaySize = { width: image.width, height: image.height }
-    faceapi.matchDimensions(canvas, displaySize)
-    const detections = await faceapi.detectAllFaces(image).withFaceLandmarks().withFaceDescriptors()
-    const resizedDetections = faceapi.resizeResults(detections, displaySize)
-    const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor))
-    results.forEach((result, i) => {
-    //   const box = resizedDetections[i].detection.box
-    //   const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
-    //   drawBox.draw(canvas)
-        console.log(result);
-        console.log(result.Match)
-        if(result.label === "Match"){
-            image_verify = true
-            Swal.fire({
-                icon: "success",
-                title: "Image Match Successful!",
-                text: "You have successfully verified.",
-                confirmButtonText: "OK"
-            }).then((result) => {
-                // Redirect to login page after user clicks OK
-                if (result.isConfirmed || result.isDismissed) {
-                    var button = document.getElementById("submitBtn");
-                    button.style.display = "block"; 
-                    verifyBtn.style.display = "none";
-                }
-            });
-        }
-        else{
-            image_verify = true
-            Swal.fire({
-                icon: "danger",
-                title: "Image Doesn't Match!",
-                text: "Verification Failed.",
-                confirmButtonText: "OK"
-            }).then((result) => {
-                // Redirect to login page after user clicks OK
-                if (result.isConfirmed || result.isDismissed) {
-                    console.log("Not Verified");
-                }
-            });
-        }
-        
+        image = await faceapi.bufferToImage(imageUpload.files[0])
+        container.append(image)
+        canvas = faceapi.createCanvasFromMedia(image)
+        container.append(canvas)
+        const displaySize = { width: image.width, height: image.height }
+        faceapi.matchDimensions(canvas, displaySize)
+        const detections = await faceapi.detectAllFaces(image).withFaceLandmarks().withFaceDescriptors()
+        const resizedDetections = faceapi.resizeResults(detections, displaySize)
+        const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor))
+        results.forEach((result, i) => {
+        //   const box = resizedDetections[i].detection.box
+        //   const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
+        //   drawBox.draw(canvas)
+            console.log(result);
+            console.log(result.Match)
+            if(result.label === "Match"){
+                image_verify = true
+                Swal.fire({
+                    icon: "success",
+                    title: "Image Match Successful!",
+                    text: "You have successfully verified.",
+                    confirmButtonText: "OK"
+                }).then((result) => {
+                    // Redirect to login page after user clicks OK
+                    if (result.isConfirmed || result.isDismissed) {
+                        var button = document.getElementById("submitBtn");
+                        button.style.display = "block"; 
+                        verifyBtn.style.display = "none";
+                    }
+                });
+            }
+            else{
+                image_verify = true
+                Swal.fire({
+                    icon: "danger",
+                    title: "Image Doesn't Match!",
+                    text: "Verification Failed.",
+                    confirmButtonText: "OK"
+                }).then((result) => {
+                    // Redirect to login page after user clicks OK
+                    if (result.isConfirmed || result.isDismissed) {
+                        console.log("Not Verified");
+                    }
+                });
+            }
+            
 
-    })
+        })
+    } catch (error) {
+        console.error("An error occurred during face verification:", error);
+        Swal.fire({
+            icon: "error",
+            title: "An Error Occurred",
+            text: "There was an error during the verification process.Possible cause Could be your captured image or uplaoded images are blurry Please try again.",
+            confirmButtonText: "OK"
+        });
+    }
   })
 }
 

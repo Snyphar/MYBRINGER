@@ -384,6 +384,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
         .liked-icon {
             color: #007bff;
         }
+        .comment-item-text {
+            margin-top: 5px;
+            color: #666;
+            max-width: 90%; /* Ensure it takes the full width of its parent by default */
+            word-wrap: break-word; /* Break long words to wrap onto the next line */
+            
+            flex: 1; /* Allow it to take available space */
+        }
 
         
         
@@ -590,7 +598,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'GET' && isset($_GET['id'])) {
                             <img src="<?php echo $comment_profile_pic; ?>" alt="" style="width: 30px; height: 30px; border-radius: 50%;" />
                             <div>
                                 <b><?php echo ucfirst(strtolower($comment_row['first_name']))." ".ucfirst(strtolower($comment_row['last_name']))?></b>
-                                <p><?php echo $comment_row['comment']; ?></p>
+                                <p class="comment-item-text"><?php echo $comment_row['comment']; ?></p>
                             </div>
                         </div>
                         <?php

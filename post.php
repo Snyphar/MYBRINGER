@@ -1,7 +1,10 @@
 <?php
 // Start the session
 session_start();
-
+if(!isset($_SESSION['id'])){
+    header("Location: login.php");
+}
+include "db_connect.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -161,7 +164,7 @@ session_start();
             
         }
         .btn-parcel-type:hover,
-        .btn-parcel-type:active {
+        .btn-parcel-type.active {
             background-color: #018CA2;
             color: white;
             border-color: #015F6A;
@@ -217,6 +220,15 @@ session_start();
             color: #1877F2; /* Color of hovered icons when selected */
         }
 
+        .comment-item-text {
+            margin-top: 5px;
+            color: #666;
+            max-width: 90%; /* Ensure it takes the full width of its parent by default */
+            word-wrap: break-word; /* Break long words to wrap onto the next line */
+            
+            flex: 1; /* Allow it to take available space */
+        }
+
 
 
         
@@ -224,6 +236,7 @@ session_start();
 
         
     </style>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 <body >
 <?php include 'navbar.php'; ?>
@@ -236,10 +249,10 @@ session_start();
         </div>
     </div>
     
-    <div class="container mt-5">
+    <div class="container-lg container-md-fluid conatiner-sm-fluid mt-5 parent-div">
     <form id="postForm" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="POST">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body form-card">
                     <input type="hidden" id="from_country" name="from_country" value="" required>
                     <input type="hidden" id="to_country" name="to_country" value="" required>
                     <input type="hidden" id="from_city" name="from_city" value="" required>
@@ -248,111 +261,115 @@ session_start();
                     <input type="hidden" id="pickup_date_end" name="pickup_date_end" value="" required>
                     <input type="hidden" id="dropoff_date_start" name="dropoff_date_start" value="" required>
                     <input type="hidden" id="dropoff_date_end" name="dropoff_date_end" value="" required>
-                    <div class="text-center">
+                    <div class="d-flex justify-content-center form-row">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="post_type" id="inlineRadio1" value="0" required>
+                            <input class="form-check-input" type="radio" name="post_type" id="inlineRadio1" value="0">
                             <label class="form-check-label" for="inlineRadio1"><b>I want to send</b></label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="post_type" id="inlineRadio2" value="1" required>
+                            <input class="form-check-input" type="radio" name="post_type" id="inlineRadio2" value="1">
                             <label class="form-check-label" for="inlineRadio2"><b>I want to receive</b></label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="post_type" id="inlineRadio3" value="2" required>
+                            <input class="form-check-input" type="radio" name="post_type" id="inlineRadio3" value="2">
                             <label class="form-check-label" for="inlineRadio3"><b>I want to carry</b></label>
                         </div>
                     </div>
-                    <div class="row pt-4">
-                        <div class="col-sm-6 col-lg-3" onclick="openPopup(0)">
-                            <label for="">From</label>
-                            <div class="card">
-                                
-                                <p id="fromValue" class="p-2">Select Pickup City</p>
+                    <div class="row pt-4 form-row">
+                        <div class="col-6  col-lg-3 form-col" onclick="openPopup(0)">
+                            <div class="custom-input">
+                                <label for="">From</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="fromValue" class="p-2">Select City</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-lg-3" onclick="openPopup(1)">
-                            <label for="">To</label>
-                            <div class="card">
-                                
-                                <p id="toValue" class="p-2">Select Destination City</p>
+                        <div class="col-6  col-lg-3 form-col" onclick="openPopup(1)">
+                            <div class="custom-input">
+                                <label for="">To</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="toValue" class="p-2">Select City</p>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        <div class="col-6 col-lg-3 form-col"  id="pickup_date_range">
+                            <div class="custom-input">
+                                <label for="">Pickup (Range)</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="pickup_date_range_val" class="p-2">Chose a date</p>
+                                </div>
+                            </div>
+                            
+                            
+                        </div>
+                        <div class="col-6 col-lg-3 form-col" id="destination_date_range">
+                            <div class="custom-input">
+                                <label for="">Drop off (Range)</label>
+                                <div class="card form-item-card">
+                                    
+                                    <p id="destination_date_range_val" class="p-2">Chose a date</p>
+                                </div>
                             </div>
                             
                         </div>
-                        <div class="col-sm-6 col-lg-3"  id="pickup_date_range">
-                            <label for="">Pickup (Range)</label>
-                            <div class="card">
-                                
-                                <p id="pickup_date_range_val" class="p-2">Chose a date</p>
+                    </div>
+                    <div class="d-flex justify-content-center parcel-type">
+                        <div class="card parcel-type-card text-center mx-auto mt-4" style="max-width: 450px;">
+                            <div class="card-title">
+                                <label for="">Parcel Type</label>
+                            </div>
+                            <div class="card-body parcel-card-body">
+                                <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-sm btn-parcel-type mr-3">
+                                        <input  type="radio" name="parcel_type" id="option1" value="0" autocomplete="off"> Document
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-3">
+                                        <input type="radio" name="parcel_type" id="option2" value="1" autocomplete="off"> Product
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-3">
+                                        <input type="radio" name="parcel_type" id="option3" value="2" autocomplete="off"> Food
+                                    </label>
+                                    <label class="btn btn-parcel-type ">
+                                        <input type="radio" name="parcel_type" id="option4" value="3" autocomplete="off"> Others
+                                    </label>
+                                </div>
                             </div>
                             
                         </div>
-                        <div class="col-sm-6 col-lg-3" id="destination_date_range">
-                            <label for="">Drop off (Range)</label>
-                            <div class="card">
-                                
-                                <p id="destination_date_range_val" class="p-2">Chose a date</p>
+                        <div class="card parcel-type-card text-center mx-auto mt-4" style="max-width: 450px;">
+                            <div class="card-title">
+                                <label for="">Parcel Size</label>
+                            </div>
+                            <div class="card-body parcel-card-body">
+                                <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
+                                    <label class="btn btn-sm btn-parcel-type mr-2">
+                                        <input type="radio" name="parcel_size" id="option1" value="0" autocomplete="off"> Small
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-2">
+                                        <input type="radio" name="parcel_size" id="option2" value="1" autocomplete="off"> Medium
+                                    </label>
+                                    <label class="btn btn-parcel-type mr-2">
+                                        <input type="radio" name="parcel_size" id="option3" value="2" autocomplete="off"> Large
+                                    </label>
+                                    <label class="btn btn-parcel-type">
+                                        <input type="radio" name="parcel_size" id="option4" value="3" autocomplete="off"> Extra Large
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-6">
-                            <div class="text-center pt-4">
-                                <div class="card parcel-type-card text-center mx-auto" style="max-width: 400px;">
-                                    <div class="card-title">
-                                        <label for="">Parcel Type</label>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-sm btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option1" value="0" autocomplete="off" required> Document
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option2" value="1" autocomplete="off" checked> Product
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option3" value="2" autocomplete="off" required> Food
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_type" id="option4" value="3" autocomplete="off" required> Others
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-center pt-4">
-                                <div class="card parcel-type-card text-center mx-auto" style="max-width: 400px;">
-                                    <div class="card-title">
-                                        <label for="">Parcel Size</label>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="btn-group-sm btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-sm btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option1" value="0" autocomplete="off"> Small
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option2" value="1" autocomplete="off" checked> Medium
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option3" value="2" autocomplete="off"> Larnge
-                                            </label>
-                                            <label class="btn btn-parcel-type mr-3">
-                                                <input type="radio" name="parcel_size" id="option4" value="3" autocomplete="off"> Extra Large
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-center d-flex pt-4">
+                    <div class="text-center d-flex pt-4 form-row">
                         <div class="row justify-content-center mx-auto">
                             
                             <div class="input-group ">
                             <label for="" class="pr-3"><b>Weight: </b></label>
-                                <input type="number" name="weight"  class="form-control">
+                                <input type="number" name="weight"  class="form-control" style="max-width: 80px">
                                 <div class="form-check form-check-inline ml-3">
                                     <input class="form-check-input" type="radio" name="weight_scale" id="inlineRadio1" value="0">
                                     <label class="form-check-label" for="inlineRadio1"><b>Kg</b></label>
@@ -369,7 +386,7 @@ session_start();
                             </div>
                         </div>
                     </div>
-                    <div class="  pt-4">
+                    <div class="text-center d-flex pt-4 form-row">
                         <label for="" class="pr-3">Details:</label>
                         <div class="input-group ">
                             

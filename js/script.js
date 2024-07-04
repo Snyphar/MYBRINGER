@@ -106,18 +106,7 @@ const swiper = new Swiper('.swiper1', {
 // const hotelCard = document.querySelectorAll('.off');
 // const text = hotelButton.innerText;
 
-hotelButton.addEventListener('click', (e) => {
-  e.preventDefault();
-  hotelCard.forEach((x) => {
-    x.classList.toggle('on');
-  });
 
-  if (e.target.innerHTML !== 'less <img src="/Imgs/icons/bleft.png">') {
-    e.target.innerHTML = `less <img src="/Imgs/icons/bleft.png" >`;
-  } else {
-    e.target.innerHTML = `view all <img src="/Imgs/icons/bleft.png" >`;
-  }
-});
 
 
 
